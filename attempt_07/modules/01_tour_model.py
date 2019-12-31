@@ -4,6 +4,7 @@ import numpy as np
 import gurobipy as grb
 import itertools
 import pickle
+import math
 
 # Read CSV --------------------------------------------------------
 family_data = pd.read_csv('attempt_07/inputs/family_data.csv')
@@ -184,3 +185,21 @@ tour_model.optimize()
 
 # Write solution to file ------------------------------------------
 tour_model.write('attempt_07/outputs/tour_solution.sol')
+
+# Extract solution for Kaggle -------------------------------------
+solution = pd.DataFrame()
+solution_vars = tour_model.getVars()
+
+for v in solution_vars:
+    if 'x_' in v.varname:
+        if v.x > 0.5:
+            var_string = v.varname
+            var_split = var_string.split('_')
+            f = var_split[1]
+            d = var_split[2]
+
+            tmp_solution = pd.DataFrame({'family_id': [int(f)], 'assigned_day': [int(d)]})
+            solution = solution.append(tmp_solution)
+
+solution = solution.sort_values('family_id')
+solution.to_csv('attempt_07/outputs/tour_solution_%d.csv' % math.floor(tour_model.objVal), index=False)
