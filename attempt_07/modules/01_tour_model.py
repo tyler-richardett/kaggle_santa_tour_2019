@@ -153,6 +153,7 @@ for d in days:
             grb.quicksum(accounting[d, a, b] * attendance_self[b] for a in attendance_range
                          for b in attendance_range) == attendance[d + 1], name=constraint
         )
+
     else:
         constraint = 'Force_Accounting_Attendance_Yesterday_%s' % d
         model_constraints[constraint] = tour_model.addConstr(
@@ -176,9 +177,11 @@ tour_model.update()
 tour_model.write('attempt_07/artifacts/tour_model.lp')
 
 # Set parameters --------------------------------------------------
+tour_model.read('attempt_07/outputs/tour_solution.sol')
 tour_model.setParam('MIPFocus', 3)
-tour_model.setParam('Cuts', 0)
-tour_model.setParam('Cutoff', 68888.05)
+tour_model.setParam('Seed', 516)
+# tour_model.setParam('Cuts', 0)
+# tour_model.setParam('Cutoff', 68888.05)
 
 # Solve model -----------------------------------------------------
 tour_model.optimize()
