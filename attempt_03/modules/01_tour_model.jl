@@ -1,5 +1,5 @@
 # Import libraries ------------------------------------------------
-using DataFrames, DataFramesMeta, CSV, Ipopt, JuMP, GLPK
+using DataFrames, DataFramesMeta, CSV, Ipopt, Juniper, JuMP
 
 # Read CSV --------------------------------------------------------
 family_data = CSV.read("family_data.csv")
@@ -34,16 +34,20 @@ family_costs = @linq family_costs |>
                      ifelse.(:choice .== "choice_6", 300 .+ 18 .* :n_people,
                      ifelse.(:choice .== "choice_7", 300 .+ 36 .* :n_people,
                      ifelse.(:choice .== "choice_8", 400 .+ 36 .* :n_people,
-                     ifelse.(:choice .== "choice_9", 500 .+ 36 .* :n_people,
-                         500 .+ 36 .* :n_people .+ 199 .* :n_people)))))))))))
+                     ifelse.(:choice .== "choice_9", 500 .+ 36 .* :n_people .+ 199 .* :n_people,
+                         500 .+ 36 .* :n_people .+ 398 .* :n_people)))))))))))
 
-dict_keys = vec([collect(x) for x in Iterators.product([family, days]...)])
+dict_keys = vec([collect(x) for x in Iterators.product([days, family]...)])
 
 preference_cost = Dict(dict_keys .=> family_costs[:cost])
 family_members = Dict(family_people[:family_id] .=> family_people[:n_people])
 
 # Initiate model --------------------------------------------------
-tour_model = Model(with_optimizer(GLPK.Optimizer))
+optimizer = Juniper.Optimizer
+params = Dict{Symbol,Any}()
+params[:nl_solver] = with_optimizer(Ipopt.Optimizer, print_level = 6)
+
+tour_model = Model(with_optimizer(optimizer, params))
 
 # Add decision variable -------------------------------------------
 visit = Dict()
@@ -56,7 +60,13 @@ for f in family
 end
 
 # Set objective ---------------------------------------------------
-@objective(tour_model, Min, sum(visit[[f, d]] * preference_cost[[f, d]] for f in family for d in days))
+@NLobjective(tour_model, Min,
+    sum(visit[[f, d]] * preference_cost[[d, f]] for f in family, d in days) +
+    sum((sum(visit[[f, d]] * family_members[f] for f in family) - 125) / 400 *
+        (sum(visit[[f, d]] * family_members[f] for f in family))^(0.5 + abs(sum(visit[[f, d]] * family_members[f] for f in family) - sum(visit[[f, d + 1]] * family_members[f] for f in family)) / 50.0)
+        for d in days if d != 100) +
+    ((sum(visit[[f, 100]] * family_members[f] for f in family) - 125) / 400 *
+        (sum(visit[[f, 100]] * family_members[f] for f in family))^0.5))
 
 # Set constraints -------------------------------------------------
 model_constraints = Dict()
@@ -74,5 +84,10 @@ for f in family
     model_constraints[constraint] = @constraint(tour_model, sum(visit[[f, d]] for d in days) .== 1, base_name = constraint)
 end
 
+# Write model to file ---------------------------------------------
+f = open("tour_model.lp", "w")
+print(f, tour_model)
+close(f)
 
+# Solve model -----------------------------------------------------
 optimize!(tour_model)
