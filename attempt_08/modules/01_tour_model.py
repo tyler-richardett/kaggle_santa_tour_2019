@@ -63,7 +63,7 @@ accounting_df['cost'] = round((accounting_df['day_0'] - 125.0) / 400.0 *
                                                        50.0), 2)
 
 accounting_cost = accounting_df \
-    .query('(cost < 6000 and day != 100) or (day == 100 and day_0 == day_1 and cost < 6000)') \
+    .query('(cost < 300 and day != 100) or (day == 100 and day_0 == day_1 and cost < 300)') \
     .set_index(['day', 'day_0', 'day_1'])['cost'] \
     .to_dict()
 
@@ -72,8 +72,8 @@ attendance_self = accounting_df \
     .set_index('day_0')['day_1'] \
     .to_dict()
 
-accounting_options = grb.tuplelist(list(accounting_df.query('(cost < 6000 and day != 100) or '
-                                                            '(day == 100 and day_0 == day_1 and cost < 6000)')
+accounting_options = grb.tuplelist(list(accounting_df.query('(cost < 300 and day != 100) or '
+                                                            '(day == 100 and day_0 == day_1 and cost < 300)')
                                                      .drop('cost', axis=1)
                                                      .itertuples(index=False, name=None)))
 
@@ -168,21 +168,20 @@ for f in family:
 tour_model.update()
 
 # Write model to file ---------------------------------------------
-tour_model.write('tour_model.mps')
+tour_model.write('attempt_08/artifacts/tour_model.lp')
 
 # Set parameters --------------------------------------------------
 # tour_model = grb.read('attempt_08/artifacts/tour_model.lp')
-tour_model.read('attempt_07/outputs/tour_solution.sol')
-tour_model.setParam('MIPFocus', 1)
-tour_model.setParam('Seed', 69)
+tour_model.read('attempt_02/outputs/tour_solution.sol')
+tour_model.setParam('MIPFocus', 2)
 # tour_model.setParam('Cuts', 0)
-# tour_model.setParam('Cutoff', 68888.05)
+tour_model.setParam('Cutoff', 68890)
 
 # Solve model -----------------------------------------------------
 tour_model.optimize()
 
 # Write solution to file ------------------------------------------
-tour_model.write('attempt_08/outputs/tour_solution.sol')
+tour_model.write('attempt_08/outputs/tour_solution_%d.sol' % math.floor(tour_model.objVal))
 
 # Extract solution for Kaggle -------------------------------------
 solution = pd.DataFrame()
@@ -190,7 +189,7 @@ solution_vars = tour_model.getVars()
 
 for v in solution_vars:
     if 'x_' in v.varname:
-        if v.x > 0.5:
+        if v.start > 0.5:
             var_string = v.varname
             var_split = var_string.split('_')
             f = var_split[1]
