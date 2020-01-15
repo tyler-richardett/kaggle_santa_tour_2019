@@ -50,7 +50,13 @@ Here, I realized I was missing the set of constraints which forcibly linked the 
 I subsequently used that solution as a warm start to the same model on a laptop with a 2.8 GHz Intel Core i7 processor and 16 GB of RAM, yielding a slight improvement to $68,913.97 after about 8 hours. This run was terminated after 39 hours, with the lower bound still in the $68,770s.
 
 ### Eighth Attempt
-For what I hoped will be the final attempt, I further reduced the size of the model, first removing any accounting cost variables with values exceeding $6,000. After an audit of previous solutions, I recognized that *all* families were assigned to days which were one of their top five preferences, so I thought it would be safe to also remove any preference variables which represented days that were *not* a top-10 choice of each family. I also moved the model to a compute-optimized server on DigitalOcean with 32 vCPUs (though I'm only using 28 of those) and 64 GB of RAM, and I resolved to be much more patient &mdash; allowing the model to run to completion, rather than constantly fiddling with the parameters or restarting with a slightly revised model.
+For what I hoped will be the final attempt, I further reduced the size of the model, first removing any accounting cost variables with values exceeding $300. After an audit of previous solutions, I recognized that *all* families were assigned to days which were one of their top five preferences, so I thought it would be safe to also remove any preference variables which represented days that were *not* a top-10 choice of each family. I also moved the model to a standard server on DigitalOcean with 16 vCPUs and 64 GB of RAM, and I resolved to be much more patient than I had been up to this point.
+
+The model returned what ended up being my best solution &mdash; $68,898.25 &mdash; after about 17 hours, when seeded with a solution with an objective value of $77,251.19. The solution did not improve after this, and there was very little movement on the lower bound, so I stopped this execution after about 48 hours.
+
+I tried one last time on the same server, beginning this execution with a $70,229.21 solution. This ran for 28 hours &mdash; right up to the Kaggle submission deadline &mdash; but its best solution by that point was $68,920.92.
 
 ## Final Submission
+Although I was a bit disappointed not to be among those with an optimal solution ($68,888.04), I did get very close ($68,898.25), and I did earn a silver medal, despite having very little experience with an optimization problem of this size and complexity. Below is a look at how the 5,000 families were distributed in my final solution, by day and by ordered choice. This visualization was inspired by [another user's public notebook](https://www.kaggle.com/ghostskipper/visualising-results).
+
 ![Submission Bar Graph](assets/family_solution.png)
