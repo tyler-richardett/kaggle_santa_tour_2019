@@ -11,7 +11,7 @@ Additionally, a non-linear accounting cost is administered as a load-balancing m
 With the exception of the third attempt, all of my solutions were implemented using Gurobi and its Python API.
 
 ## Exploratory Analysis
-To be added at a later date.
+![Accounting Cost Heatmap](assets/accounting_cost.png)
 
 ## Solving the Model
 ### First Attempt
@@ -51,3 +51,6 @@ I subsequently used that solution as a warm start to the same model on a laptop 
 
 ### Eighth Attempt
 For what I hoped will be the final attempt, I further reduced the size of the model, first removing any accounting cost variables with values exceeding $6,000. After an audit of previous solutions, I recognized that *all* families were assigned to days which were one of their top five preferences, so I thought it would be safe to also remove any preference variables which represented days that were *not* a top-10 choice of each family. I also moved the model to a compute-optimized server on DigitalOcean with 32 vCPUs (though I'm only using 28 of those) and 64 GB of RAM, and I resolved to be much more patient &mdash; allowing the model to run to completion, rather than constantly fiddling with the parameters or restarting with a slightly revised model.
+
+## Final Submission
+![Submission Bar Graph](assets/family_solution.png)
